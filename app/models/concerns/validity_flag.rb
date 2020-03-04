@@ -6,6 +6,7 @@ module ValidityFlag
   NOTFOUND         = 'not found'.freeze
   VALID            = 'valid'.freeze
   INVALID          = 'invalid'.freeze
+  INVALID_IMAGE_SIZE = 'invalid_image_size'.freeze
   FAILED           = 'failed'.freeze
   COMPLETE         = 'complete'.freeze
   VALIDATING       = 'validating'.freeze

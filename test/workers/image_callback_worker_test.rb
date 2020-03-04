@@ -19,7 +19,9 @@ describe ImageCallbackWorker do
       type: image.class.table_name,
       downloaded: true,
       valid: true,
-      resized: true
+      resized: true,
+      width: image.width,
+      height: image.height,
     }
     worker.perform(nil, defaults.merge(attrs).with_indifferent_access)
     image.reload
@@ -91,5 +93,32 @@ describe ImageCallbackWorker do
     last_message['subject'].must_equal :series
     last_message['action'].must_equal :update
     JSON.parse(last_message['body'])['id'].must_equal series_image.series.id
+  end
+
+  describe "validating the dimensions of profile images" do
+    setup do
+      image.update_attributes!(purpose: Image::PROFILE)
+    end
+
+    it 'sets a validation flag for images with purpose "profile" that are too small' do
+      perform(id: image.id, width: 100, height: 100)
+      image.dimension_errors.full_messages.must_equal(['Image dimensions 100x100 must be greater than 1400 pixels and less than 3000 pixels.'])
+    end
+
+    it 'sets a validation flag for images with purpose "profile" that are not square' do
+      perform(id: image.id, width: 3000, height: 1400)
+      image.dimension_errors.full_messages.must_equal(['Image must be square.'])
+    end
+  end
+
+  describe "validating the dimensions of profile images" do
+    setup do
+      series_image.update_attributes!(purpose: Image::THUMBNAIL, height: 1400, width: 1400)
+    end
+
+    it 'sets a validation flag for images that are too big' do
+      perform(id: series_image.id)
+      series_image.dimension_errors.full_messages.must_equal(['Image dimensions 1400x1400 must be less than 300 pixels.'])
+    end
   end
 end

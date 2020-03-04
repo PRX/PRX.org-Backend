@@ -24,6 +24,8 @@ class ImageCallbackWorker
       image.status = INVALID
     elsif !job['resized']
       image.status = FAILED
+    elsif image.invalid_dimensions?
+      image.status = INVALID_IMAGE_SIZE
     else
       image.status = COMPLETE
     end

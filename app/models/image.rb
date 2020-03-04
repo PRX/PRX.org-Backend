@@ -35,4 +35,48 @@ class Image < BaseModel
   def self.policy_class
     ImagePolicy
   end
+
+  def valid_dimensions?
+    dimension_errors.empty?
+  end
+
+  def invalid_dimensions?
+    !valid_dimensions?
+  end
+
+  def dimension_errors
+    errs = ActiveModel::Errors.new(self)
+
+    # percolate up useful info if possible
+    dim_label = dims.all?(&:present?) ? "#{width}x#{height} " : ''
+
+    case purpose
+    when Image::PROFILE
+      errs.add(:base, 'Image must be square.') if !square?
+
+      errs.add(:base, "Image dimensions #{dim_label}must be greater than 1400 pixels and" \
+        ' less than 3000 pixels.') if !bounded?(1400, 3000)
+    when Image::THUMBNAIL
+      errs.add(:base, 'Image must be square.') if !square?
+      errs.add(:base, "Image dimensions #{dim_label}must be less than 300 pixels.") if !bounded?(0, 300)
+    end
+
+    errs
+  end
+
+  def dims
+    [width, height]
+  end
+
+  def bounded?(min_range, max_range)
+    dims.all?(&:present?) &&
+    dims.max.between?(min_range, max_range) &&
+      dims.min.between?(min_range, max_range)
+  end
+
+  def square?
+    dims.all?(&:present?) &&
+      height == width
+  end
+
 end
